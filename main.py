@@ -4,6 +4,9 @@
 from urllib.parse import quote
 
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def get_bbox(city):
@@ -27,6 +30,22 @@ def get_bbox(city):
     openaq_bbox = f"{min_lon},{min_lat},{max_lon},{max_lat}"
 
     return openaq_bbox
+
+API_KEY = 'OMA API KEY'
+
+# tämä funktio saa parametrinaan kaupungin bounding boxin get_bbox-funktiolta
+def get_openaq_locations_by_bbox(_bbox):
+    response = requests.get(
+        f'https://api.openaq.org/v3/locations?limit=1000&page=1&order_by=id&sort_order=asc&bbox={_bbox}',
+        headers={'X-API-Key': API_KEY})
+    _locations = []
+    # muista, että http-statuskoodi 200 on OK
+    # voit myös heittää poikkeuksen,
+    # jos statuskoodi on jotakin muuta kuin 200
+    if response.status_code == 200:
+        _locations = response.json()['results']
+
+    return _locations
 
 
 
