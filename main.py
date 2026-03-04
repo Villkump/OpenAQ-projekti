@@ -1,8 +1,10 @@
+import io
 import os
 from urllib.parse import quote
 
 import requests
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
@@ -69,4 +71,4 @@ if __name__ == "__main__":
     bbox = get_bbox("Oulu")
     _locations = get_openaq_locations_by_bbox(bbox)
     if len(_locations) > 0:
-        print(_locations[0])
+        download_file_by_location(_locations[0]['id'], 2020,1,1)
