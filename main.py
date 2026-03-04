@@ -1,6 +1,4 @@
-
-
-
+import os
 from urllib.parse import quote
 
 import requests
@@ -31,13 +29,11 @@ def get_bbox(city):
 
     return openaq_bbox
 
-API_KEY = 'OMA API KEY'
-
 # tämä funktio saa parametrinaan kaupungin bounding boxin get_bbox-funktiolta
 def get_openaq_locations_by_bbox(_bbox):
     response = requests.get(
         f'https://api.openaq.org/v3/locations?limit=1000&page=1&order_by=id&sort_order=asc&bbox={_bbox}',
-        headers={'X-API-Key': API_KEY})
+        headers={'X-API-Key': os.getenv('API_KEY')})
     _locations = []
     # muista, että http-statuskoodi 200 on OK
     # voit myös heittää poikkeuksen,
@@ -50,6 +46,27 @@ def get_openaq_locations_by_bbox(_bbox):
 
 
 
+def download_file_by_location(location_id, year, month, day):
+    date_str = f"{year}{month:02d}{day:02d}"
+    base_url = "https://openaq-data-archive.s3.amazonaws.com"
+    key = f"records/csv.gz/locationid={location_id}/year={year}/month={month:02d}/location-{location_id}-{date_str}.csv.gz"
+    full_url = f"{base_url}/{key}"
+
+    # 2. Use requests to get the file
+    response = requests.get(full_url)
+
+    if response.status_code == 200:
+        # pandas osaa avata gzip-pakatun csv
+        df = pd.read_csv(io.BytesIO(response.content), compression='gzip')
+        df.to_csv(f"{location_id}-{date_str}.csv", index=False)
+    else:
+        print(f"Failed to fetch. Status: {response.status_code}")
+
+
+
+
 if __name__ == "__main__":
     bbox = get_bbox("Oulu")
-    print(bbox)
+    _locations = get_openaq_locations_by_bbox(bbox)
+    if len(_locations) > 0:
+        print(_locations[0])
